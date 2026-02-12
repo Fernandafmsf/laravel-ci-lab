@@ -3,30 +3,88 @@ name: Manual Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Informe a versão (ex: v1.2.0)"
+      merge_master_into_develop:
+        description: "Fazer merge da master em develop?"
         required: true
+        type: choice
+        options:
+          - "yes"
+          - "no"
+
+      version:
+        description: "Versão (ex: v1.2.0). Deixe vazio para auto incrementar PATCH."
+        required: false
         type: string
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout
+      - name: Checkout completo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Configurar Git
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "release-bot"
+          git config user.email "release-bot@github.com"
 
-      - name: Criar tag
+      - name: Atualizar branches
         run: |
-          git tag -a ${{ github.event.inputs.version }} -m "Release ${{ github.event.inputs.version }}"
-          git push origin ${{ github.event.inputs.version }}
+          git checkout master
+          git pull origin master
+
+          git checkout develop
+          git pull origin develop
+
+      # 🔹 Merge opcional
+      - name: Merge master -> develop
+        if: ${{ github.event.inputs.merge_master_into_develop == 'yes' }}
+        run: |
+          git checkout develop
+          git merge master --no-ff -m "Merge master into develop before release"
+
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} develop
+
+      # 🔹 Buscar última tag
+      - name: Buscar última tag
+        id: last_tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Última tag encontrada: $LAST_TAG"
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      # 🔹 Definir versão
+      - name: Definir versão final
+        id: define_version
+        run: |
+          INPUT_VERSION="${{ github.event.inputs.version }}"
+          LAST="${{ steps.last_tag.outputs.last_tag }}"
+
+          if [ -z "$INPUT_VERSION" ]; then
+            echo "Auto incrementando PATCH..."
+            VERSION=${LAST#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            PATCH=$((PATCH + 1))
+            NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          else
+            NEW_VERSION="$INPUT_VERSION"
+          fi
+
+          echo "Nova versão definida: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      # 🔹 Criar tag na master
+      - name: Criar e enviar tag
+        run: |
+          VERSION=${{ steps.define_version.outputs.version }}
+
+          git checkout master
+          git pull origin master
+
+          git tag -a $VERSION -m "Release $VERSION"
+
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} $VERSION
+

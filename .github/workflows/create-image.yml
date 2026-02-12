@@ -9,23 +9,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
-
     steps:
-      - name: Checkout código
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Build imagem Docker
+      - name: Mostrar versão
+        run: echo "Nova tag detectada: ${{ github.ref_name }}"
+
+      - name: Build imagem
         run: |
           docker build \
             --build-arg APP_VERSION=${{ github.ref_name }} \
             --build-arg APP_COMMIT=${{ github.sha }} \
             --build-arg APP_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
             -t laravel-ci-lab:${{ github.ref_name }} .
-
-      - name: Listar imagens
-        run: docker images
