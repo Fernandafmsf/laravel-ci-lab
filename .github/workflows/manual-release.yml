@@ -3,14 +3,6 @@ name: Manual Release
 on:
   workflow_dispatch:
     inputs:
-      merge_master_into_develop:
-        description: "Fazer merge da master em develop?"
-        required: true
-        type: choice
-        options:
-          - "yes"
-          - "no"
-
       version:
         description: "Versão (ex: v1.2.0). Deixe vazio para auto incrementar PATCH."
         required: false
@@ -39,15 +31,7 @@ jobs:
           git checkout develop
           git pull origin develop
 
-      # 🔹 Merge opcional
-      - name: Merge master -> develop
-        if: ${{ github.event.inputs.merge_master_into_develop == 'yes' }}
-        run: |
-          git checkout develop
-          git merge master --no-ff -m "Merge master into develop before release"
-
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} develop
-
+     
       # 🔹 Buscar última tag
       - name: Buscar última tag
         id: last_tag
