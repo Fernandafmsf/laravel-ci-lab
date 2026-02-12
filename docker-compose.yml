@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: laravel-ci-lab
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_KEY: base64:SomeRandomKey=
+      APP_VERSION: dev
+      APP_COMMIT: local
+      APP_BUILD_DATE: local
