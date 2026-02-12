@@ -14,7 +14,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Mostrar versão
-        run: echo "Nova tag detectada: ${{ github.ref_name }}"
+        run: | 
+          echo "Nova tag detectada: ${{ github.ref_name }}"
 
       - name: Build imagem
         run: |

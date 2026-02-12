@@ -23,6 +23,12 @@ jobs:
           git config user.name "release-bot"
           git config user.email "release-bot@github.com"
 
+      # 🔐 Configura autenticação com PAT (uma única vez)
+      - name: Configurar autenticação com PAT
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
+
+      # 🔄 Atualiza master e develop
       - name: Atualizar branches
         run: |
           git checkout master
@@ -31,7 +37,6 @@ jobs:
           git checkout develop
           git pull origin develop
 
-     
       # 🔹 Buscar última tag
       - name: Buscar última tag
         id: last_tag
@@ -60,7 +65,7 @@ jobs:
           echo "Nova versão definida: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      # 🔹 Criar tag na master
+      # 🔹 Criar e enviar tag
       - name: Criar e enviar tag
         run: |
           VERSION=${{ steps.define_version.outputs.version }}
@@ -68,7 +73,12 @@ jobs:
           git checkout master
           git pull origin master
 
+          # Evita erro se tag já existir
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION já existe!"
+            exit 1
+          fi
+
           git tag -a $VERSION -m "Release $VERSION"
 
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} $VERSION
-
+          git push origin $VERSION
