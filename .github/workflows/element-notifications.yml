@@ -1,3 +1,13 @@
+# =============================================================================
+# CALLER WORKFLOW — copie este arquivo para cada um dos seus 3 repos
+# Caminho: .github/workflows/element-notify.yml
+#
+# Substitua "Fernandafmsf/element-notify-" pelo repo onde está o notify-element.yml
+#
+# Repare: sem nenhum bloco "secrets:" aqui. As credenciais ficam
+# isoladas no repo central (devops) e os callers não têm acesso a elas.
+# =============================================================================
+
 name: Element Notifications
 
 on:
@@ -15,9 +25,6 @@ on:
 
 jobs:
 
-  # ---------------------------------------------------------------------------
-  # PR aberto
-  # ---------------------------------------------------------------------------
   notify-pr-opened:
     if: github.event_name == 'pull_request' && github.event.action == 'opened'
     uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
@@ -29,11 +36,7 @@ jobs:
       pr_url:      ${{ github.event.pull_request.html_url }}
       pr_number:   ${{ github.event.pull_request.number }}
       pr_author:   ${{ github.event.pull_request.user.login }}
-    secrets: inherit
 
-  # ---------------------------------------------------------------------------
-  # Review solicitado
-  # ---------------------------------------------------------------------------
   notify-review-requested:
     if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
     uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
@@ -46,11 +49,7 @@ jobs:
       pr_number:   ${{ github.event.pull_request.number }}
       pr_author:   ${{ github.event.pull_request.user.login }}
       reviewer:    ${{ github.event.requested_reviewer.login }}
-    secrets: inherit
 
-  # ---------------------------------------------------------------------------
-  # PR aprovado
-  # ---------------------------------------------------------------------------
   notify-review-approved:
     if: >
       github.event_name == 'pull_request_review' &&
@@ -65,11 +64,7 @@ jobs:
       pr_number:   ${{ github.event.pull_request.number }}
       pr_author:   ${{ github.event.pull_request.user.login }}
       reviewer:    ${{ github.event.review.user.login }}
-    secrets: inherit
 
-  # ---------------------------------------------------------------------------
-  # Mudanças solicitadas
-  # ---------------------------------------------------------------------------
   notify-changes-requested:
     if: >
       github.event_name == 'pull_request_review' &&
@@ -84,11 +79,7 @@ jobs:
       pr_number:   ${{ github.event.pull_request.number }}
       pr_author:   ${{ github.event.pull_request.user.login }}
       reviewer:    ${{ github.event.review.user.login }}
-    secrets: inherit
 
-  # ---------------------------------------------------------------------------
-  # PR mergeado
-  # ---------------------------------------------------------------------------
   notify-pr-merged:
     if: >
       github.event_name == 'pull_request' &&
@@ -103,11 +94,7 @@ jobs:
       pr_url:      ${{ github.event.pull_request.html_url }}
       pr_number:   ${{ github.event.pull_request.number }}
       pr_author:   ${{ github.event.pull_request.user.login }}
-    secrets: inherit
 
-  # ---------------------------------------------------------------------------
-  # PR fechado sem merge
-  # ---------------------------------------------------------------------------
   notify-pr-closed:
     if: >
       github.event_name == 'pull_request' &&
@@ -122,11 +109,7 @@ jobs:
       pr_url:      ${{ github.event.pull_request.html_url }}
       pr_number:   ${{ github.event.pull_request.number }}
       pr_author:   ${{ github.event.pull_request.user.login }}
-    secrets: inherit
 
-  # ---------------------------------------------------------------------------
-  # Comentário em PR (issue_comment cobre comentários em PRs também)
-  # ---------------------------------------------------------------------------
   notify-pr-commented:
     if: >
       github.event_name == 'issue_comment' &&
@@ -141,11 +124,7 @@ jobs:
       pr_url:      ${{ github.event.issue.pull_request.html_url }}
       pr_number:   ${{ github.event.issue.number }}
       pr_author:   ${{ github.event.issue.user.login }}
-    secrets: inherit
 
-  # ---------------------------------------------------------------------------
-  # Push na main/master
-  # ---------------------------------------------------------------------------
   notify-push-main:
     if: github.event_name == 'push'
     uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
@@ -156,4 +135,3 @@ jobs:
       branch:         ${{ github.ref_name }}
       commit_message: ${{ github.event.head_commit.message }}
       commit_url:     ${{ github.event.head_commit.url }}
-    secrets: inherit
