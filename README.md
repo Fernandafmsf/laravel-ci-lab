@@ -94,3 +94,7 @@ Durante a implementação foram solucionados:
 - Gerar release notes automáticas
 - Estudar sobre visualização de logs 
 - Estudar possibilidade de merge automático na develop
+
+
+## Status de PR automatizados 
+Teste
