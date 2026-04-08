@@ -1,0 +1,168 @@
+# =============================================================================
+# CALLER WORKFLOW — copie este arquivo para cada um dos seus 3 repos
+# Caminho: .github/workflows/element-notify.yml
+#
+# Substitua "Fernandafmsf/element-notify-" pelo repo onde está o notify-element.yml
+#
+# Repare: sem nenhum bloco "secrets:" aqui. As credenciais ficam
+# isoladas no repo central (devops) e os callers não têm acesso a elas.
+# =============================================================================
+
+name: Element Notifications
+
+on:
+  pull_request:
+    types: [opened, closed, review_requested]
+
+  pull_request_review:
+    types: [submitted]
+
+  issue_comment:
+    types: [created]
+
+  push:
+    branches: [main, master]
+
+jobs:
+  notify-pr-opened:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "pr_opened"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.pull_request.user.login }}
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_url: ${{ github.event.pull_request.html_url }}
+      pr_number: ${{ github.event.pull_request.number }}
+      pr_author: ${{ github.event.pull_request.user.login }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
+  notify-review-requested:
+    if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "review_requested"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.sender.login }}
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_url: ${{ github.event.pull_request.html_url }}
+      pr_number: ${{ github.event.pull_request.number }}
+      pr_author: ${{ github.event.pull_request.user.login }}
+      reviewer: ${{ github.event.requested_reviewer.login }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
+  notify-review-approved:
+    if: >
+      github.event_name == 'pull_request_review' &&
+      github.event.review.state == 'approved'
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "review_approved"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.review.user.login }}
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_url: ${{ github.event.pull_request.html_url }}
+      pr_number: ${{ github.event.pull_request.number }}
+      pr_author: ${{ github.event.pull_request.user.login }}
+      reviewer: ${{ github.event.review.user.login }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
+  notify-changes-requested:
+    if: >
+      github.event_name == 'pull_request_review' &&
+      github.event.review.state == 'changes_requested'
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "review_changes_requested"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.review.user.login }}
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_url: ${{ github.event.pull_request.html_url }}
+      pr_number: ${{ github.event.pull_request.number }}
+      pr_author: ${{ github.event.pull_request.user.login }}
+      reviewer: ${{ github.event.review.user.login }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
+  notify-pr-merged:
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == true
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "pr_merged"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.sender.login }}
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_url: ${{ github.event.pull_request.html_url }}
+      pr_number: ${{ github.event.pull_request.number }}
+      pr_author: ${{ github.event.pull_request.user.login }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
+  notify-pr-closed:
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.merged == false
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "pr_closed"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.sender.login }}
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_url: ${{ github.event.pull_request.html_url }}
+      pr_number: ${{ github.event.pull_request.number }}
+      pr_author: ${{ github.event.pull_request.user.login }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
+  notify-pr-commented:
+    if: >
+      github.event_name == 'issue_comment' &&
+      github.event.action == 'created' &&
+      github.event.issue.pull_request != null
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "pr_commented"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.sender.login }}
+      pr_title: ${{ github.event.issue.title }}
+      pr_url: ${{ github.event.issue.pull_request.html_url }}
+      pr_number: ${{ github.event.issue.number }}
+      pr_author: ${{ github.event.issue.user.login }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}
+
+  notify-push-main:
+    if: github.event_name == 'push'
+    uses: Fernandafmsf/element-notify-/.github/workflows/notify-element.yml@main
+    with:
+      event_type: "push_main"
+      repo_name: ${{ github.event.repository.name }}
+      actor: ${{ github.event.pusher.name }}
+      branch: ${{ github.ref_name }}
+      commit_message: ${{ github.event.head_commit.message }}
+      commit_url: ${{ github.event.head_commit.url }}
+    secrets:
+      MATRIX_HOMESERVER: ${{ secrets.MATRIX_HOMESERVER }}
+      MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+      MATRIX_ROOM_ID: ${{ secrets.MATRIX_ROOM_ID }}

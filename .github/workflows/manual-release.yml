@@ -1,0 +1,92 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão (ex: v1.2.0). Deixe vazio para auto incrementar PATCH."
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configurar Git
+        run: |
+          git config user.name "release-bot"
+          git config user.email "release-bot@github.com"
+
+      # 🔐 Configura autenticação com PAT (uma única vez)
+      - name: Configurar autenticação com PAT
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
+
+      # 🔄 Atualiza master e develop
+      - name: Atualizar branches
+        run: |
+          git checkout master
+          git pull origin master
+
+          git checkout develop
+          git pull origin develop
+
+      # 🔹 Buscar última tag
+      - name: Buscar última tag
+        id: last_tag
+        run: |
+          git fetch --tags
+          LAST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
+
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="v0.0.0"
+          fi
+
+          echo "Última tag encontrada: $LAST_TAG"
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+
+      # 🔹 Definir versão
+      - name: Definir versão final
+        id: define_version
+        run: |
+          INPUT_VERSION="${{ github.event.inputs.version }}"
+          LAST="${{ steps.last_tag.outputs.last_tag }}"
+
+          if [ -z "$INPUT_VERSION" ]; then
+            echo "Auto incrementando PATCH..."
+            VERSION=${LAST#v}
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+            PATCH=$((PATCH + 1))
+            NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          else
+            NEW_VERSION="$INPUT_VERSION"
+          fi
+
+          echo "Nova versão definida: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      # 🔹 Criar e enviar tag
+      - name: Criar e enviar tag
+        run: |
+          VERSION=${{ steps.define_version.outputs.version }}
+
+          git checkout master
+          git pull origin master
+
+          # Evita erro se tag já existir
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION já existe!"
+            exit 1
+          fi
+
+          git tag -a $VERSION -m "Release $VERSION"
+
+          git push origin $VERSION
